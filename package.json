@@ -1,0 +1,10 @@
+{
+  "name": "fusion-esports-website",
+  "version": "1.0.0",
+  "description": "Fusion Esports website with Discord bot management",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^2.8.1"
+  }
+}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>Fusion Esports</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="bg-orb orb-3"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+    <div class="nav-inner">
+        <div class="nav-left">
+            <img src="logo.png" alt="Fusion Esports Logo">
+            <span class="nav-brand">Fusion <span class="accent">Esports</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#stats">Community</a>
+            <a href="#tournament">Tournaments</a>
+            <a href="#socials">Team</a>
+        </div>
+        <a id="navDiscordBtn" href="#" target="_blank" class="btn-discord">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.081.114 18.104.133 18.12a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.464-.62.89-1.287 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            Join Discord
+        </a>
+        <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features" onclick="closeMobile()">Features</a>
+        <a href="#stats" onclick="closeMobile()">Community</a>
+        <a href="#tournament" onclick="closeMobile()">Tournaments</a>
+        <a href="#socials" onclick="closeMobile()">Team</a>
+        <a id="mobileDiscordBtn" href="#" target="_blank" class="mobile-discord">Join Discord</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+    <div class="hero-badge"><span class="badge-dot"></span>Rocket League Community</div>
+    <h1>Play. Improve. <span class="gradient-text">Dominate.</span></h1>
+    <p class="hero-sub">The most competitive and welcoming Rocket League community. Free coaching, weekly tournaments, and a squad that's got your back.</p>
+    <div class="hero-actions">
+        <a id="heroDiscordBtn" href="#" target="_blank" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.081.114 18.104.133 18.12a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.464-.62.89-1.287 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            Join the Server
+        </a>
+        <a href="#features" class="btn-ghost">See What We Offer ↓</a>
+    </div>
+    <div class="hero-visual">
+        <div class="glow-ring"></div>
+        <img src="logo.png" alt="Fusion Esports" class="hero-logo">
+    </div>
+</header>
+
+<!-- STATS -->
+<section class="stats-section" id="stats">
+    <div class="stats-inner">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h2 id="members" class="stat-number">—</h2>
+                <p>Total Members</p>
+            </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+            <div class="stat-icon online-dot-wrap"><span class="online-dot"></span></div>
+            <div class="stat-info">
+                <h2 id="online" class="stat-number">—</h2>
+                <p>Online Now</p>
+            </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info">
+                <h2 class="stat-number">Weekly</h2>
+                <p>Tournaments</p>
+            </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+                <h2 class="stat-number">Free</h2>
+                <p>Coaching</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+    <div class="section-header">
+        <span class="section-tag">What We Offer</span>
+        <h2>Everything You Need to <span class="gradient-text">Level Up</span></h2>
+        <p>Built by players, for players. Everything in Fusion Esports is designed to help you grow.</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card feature-large"><div class="feature-glow"></div><div class="feature-emoji">🎯</div><h3>Free Coaching</h3><p>Get personalized 1-on-1 or group coaching from experienced Grand Champion and SSL players. We break down your replays, fix your mechanics, sharpen your rotations, and build better game sense — all at no cost.</p><div class="feature-tags"><span>Replay Analysis</span><span>Mechanics</span><span>Rotations</span><span>Game Sense</span></div></div>
+        <div class="feature-card"><div class="feature-glow"></div><div class="feature-emoji">🏆</div><h3>Weekly Tournaments</h3><p>Compete in structured brackets every week with active moderation and fair, balanced matchmaking. Show what you're made of.</p><div class="feature-tags"><span>Brackets</span><span>Fair Play</span></div></div>
+        <div class="feature-card"><div class="feature-glow"></div><div class="feature-emoji">🤝</div><h3>Friendly Community</h3><p>Find teammates, scrim partners and improve together. Fusion Esports is a welcoming, drama-free zone for all ranks.</p><div class="feature-tags"><span>Teammates</span><span>Scrims</span></div></div>
+        <div class="feature-card"><div class="feature-glow"></div><div class="feature-emoji">📈</div><h3>Rank Up Fast</h3><p>With dedicated coaching and consistent tournament play, our members see real rank progression — faster than grinding alone.</p><div class="feature-tags"><span>All Ranks</span><span>Progress</span></div></div>
+    </div>
+</section>
+
+<!-- RANKS BANNER -->
+<div class="ranks-banner">
+    <p>All ranks welcome — Bronze to SSL</p>
+    <div class="ranks-list">
+        <span>🥉 Bronze</span><span>🪙 Silver</span><span>🥇 Gold</span><span>💎 Platinum</span>
+        <span>💠 Diamond</span><span>👑 Champion</span><span>🏅 Grand Champ</span><span>⭐ SSL</span>
+    </div>
+</div>
+
+<!-- TOURNAMENT -->
+<section class="tournament-section" id="tournament">
+    <div class="section-header">
+        <span class="section-tag" id="tournamentTag">Every Saturday</span>
+        <h2>Weekly <span class="gradient-text">Tournament</span></h2>
+        <p>Compete every week. Show up, climb brackets, and prove yourself.</p>
+    </div>
+    <div class="tournament-layout">
+        <div class="countdown-card">
+            <div class="countdown-status" id="tournamentStatus"><span class="status-dot"></span><span id="statusText">Loading...</span></div>
+            <p class="countdown-label" id="countdownLabel">Next tournament in</p>
+            <div class="countdown-grid">
+                <div class="countdown-unit"><span class="countdown-num" id="cdDays">--</span><span class="countdown-sub">Days</span></div>
+                <div class="countdown-sep">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cdHours">--</span><span class="countdown-sub">Hours</span></div>
+                <div class="countdown-sep">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cdMins">--</span><span class="countdown-sub">Mins</span></div>
+                <div class="countdown-sep">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cdSecs">--</span><span class="countdown-sub">Secs</span></div>
+            </div>
+            <div class="countdown-meta" id="countdownMeta"></div>
+            <a id="tournamentDiscordBtn" href="#" target="_blank" class="btn-primary" style="margin-top:28px;width:100%;justify-content:center;">Register on Discord</a>
+        </div>
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <h3>Upcoming Dates</h3>
+                <span class="calendar-tz" id="calendarTz"></span>
+            </div>
+            <div class="calendar-list" id="calendarList"></div>
+        </div>
+    </div>
+</section>
+
+<!-- SOCIALS — rendered by JS -->
+<section class="socials-section" id="socials">
+    <div class="section-header">
+        <span class="section-tag">The Team</span>
+        <h2>Creators & <span class="gradient-text">Socials</span></h2>
+        <p>The people behind Fusion Esports — follow our owners and creators.</p>
+    </div>
+    <div class="socials-grid" id="socialsGrid"></div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="cta-inner">
+        <div class="cta-glow"></div>
+        <img src="logo.png" alt="Fusion Esports" class="cta-logo">
+        <h2>Ready to Join <span class="gradient-text">Fusion?</span></h2>
+        <p>Hundreds of players are already competing, improving, and having fun. Your spot is waiting.</p>
+        <a id="ctaDiscordBtn" href="#" target="_blank" class="btn-primary btn-large">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.081.114 18.104.133 18.12a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.464-.62.89-1.287 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            Join Fusion Esports
+        </a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-left"><img src="logo.png" alt="Fusion Esports"><span>Fusion Esports</span></div>
+        <p class="footer-copy">© 2026 Fusion Esports. All rights reserved.</p>
+        <div class="footer-links"><a id="footerDiscordBtn" href="#" target="_blank">Discord</a></div>
+    </div>
+</footer>
+
+<!-- ══════════════════════════════════════
+     ADMIN PANEL  —  open with Ctrl+Shift+A
+══════════════════════════════════════ -->
+<div id="adminOverlay" class="admin-overlay hidden">
+    <div class="admin-panel">
+        <div class="admin-header">
+            <div class="admin-title">
+                <span class="admin-icon">⚙️</span>
+                <div>
+                    <h2>Admin Panel</h2>
+                    <p>Changes save instantly — no deploy needed</p>
+                </div>
+            </div>
+            <button class="admin-close" onclick="closeAdmin()">✕</button>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchTab('general')">General</button>
+            <button class="admin-tab" onclick="switchTab('tournament')">Tournament</button>
+            <button class="admin-tab" onclick="switchTab('socials')">Socials</button>
+            <button class="admin-tab" onclick="switchTab('security')">Security</button>
+        </div>
+
+        <!-- GENERAL -->
+        <div class="admin-body" id="tab-general">
+            <div class="admin-section">
+                <h3>Discord Server</h3>
+                <div class="admin-field">
+                    <label>Discord Invite URL</label>
+                    <input type="text" id="cfg-discordUrl" placeholder="https://discord.gg/...">
+                </div>
+            </div>
+            <div class="admin-section">
+                <h3>Member Stats</h3>
+                <p class="admin-hint">Discord's widget API can't provide total members — set it manually here.</p>
+                <div class="admin-row">
+                    <div class="admin-field">
+                        <label>Total Members display</label>
+                        <input type="text" id="cfg-memberCount" placeholder="e.g. 500+">
+                    </div>
+                    <div class="admin-field">
+                        <label>Online count</label>
+                        <input type="text" id="cfg-onlineCount" placeholder="auto">
+                        <span class="admin-hint">Leave blank or "auto" to fetch live from Discord widget</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOURNAMENT -->
+        <div class="admin-body hidden" id="tab-tournament">
+            <div class="admin-section">
+                <h3>Schedule</h3>
+                <p class="admin-hint">Times are in UK time (GMT/BST). The site handles daylight saving automatically.</p>
+                <div class="admin-row">
+                    <div class="admin-field">
+                        <label>Day of week</label>
+                        <select id="cfg-tournDay">
+                            <option value="0">Sunday</option>
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label>Hour (0–23, UK time)</label>
+                        <input type="number" id="cfg-tournHour" min="0" max="23">
+                    </div>
+                    <div class="admin-field">
+                        <label>Minute (0–59)</label>
+                        <input type="number" id="cfg-tournMinute" min="0" max="59">
+                    </div>
+                </div>
+                <div class="admin-row">
+                    <div class="admin-field">
+                        <label>Tournament name</label>
+                        <input type="text" id="cfg-tournName" placeholder="e.g. Fusion Weekly">
+                    </div>
+                    <div class="admin-field">
+                        <label>Upcoming dates to show</label>
+                        <input type="number" id="cfg-tournCount" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOCIALS -->
+        <div class="admin-body hidden" id="tab-socials">
+            <div class="admin-section">
+                <h3>Social Cards</h3>
+                <p class="admin-hint">Drag to reorder. Platform sets the badge colour.</p>
+                <div id="socialsEditor"></div>
+                <button class="btn-add-social" onclick="addSocialRow()">+ Add Card</button>
+            </div>
+        </div>
+
+        <!-- SECURITY -->
+        <div class="admin-body hidden" id="tab-security">
+            <div class="admin-section">
+                <h3>Admin Password</h3>
+                <p class="admin-hint">Used to open this panel (Ctrl+Shift+A). Default is <strong>fusion</strong>.</p>
+                <div class="admin-field">
+                    <label>New password</label>
+                    <input type="password" id="cfg-newPass" placeholder="Min 4 characters">
+                </div>
+                <div class="admin-field">
+                    <label>Confirm password</label>
+                    <input type="password" id="cfg-confirmPass">
+                </div>
+                <button class="btn-save-pass" onclick="savePassword()">Update Password</button>
+                <p id="passMsg" style="margin-top:10px;font-size:0.85rem;color:#4ade80;"></p>
+            </div>
+        </div>
+
+        <div class="admin-footer">
+            <button class="btn-reset" onclick="resetToDefaults()">↺ Reset defaults</button>
+            <button class="btn-save" onclick="saveConfig()">✓ Save & Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="admin-overlay hidden">
+    <div class="login-panel">
+        <div class="login-icon">🔒</div>
+        <h2>Admin Access</h2>
+        <p>Enter the admin password</p>
+        <input type="password" id="loginInput" placeholder="Password" onkeydown="if(event.key==='Enter') checkLogin()">
+        <p id="loginError" class="login-error"></p>
+        <div class="login-btns">
+            <button onclick="document.getElementById('adminLogin').classList.add('hidden')">Cancel</button>
+            <button class="btn-login" onclick="checkLogin()">Enter →</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
