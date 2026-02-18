@@ -356,5 +356,15 @@ if (process.env.RENDER_EXTERNAL_URL) {
     }, 4 * 60 * 1000); // Every 4 minutes
 }
 
+const statuses = ['Rocket League', 'Fusion Esports Website', 'Everyone in the server'];
+let index = 0;
+
+client.on('ready', () => {
+  setInterval(() => {
+    client.user.setActivity(statuses[index], { type: ActivityType.Watching });
+    index = (index + 1) % statuses.length;
+  }, 60000); // 60 seconds
+});
+
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN);
