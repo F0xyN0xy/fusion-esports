@@ -1,14 +1,29 @@
-import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Events } from 'discord.js';
 import { config } from 'dotenv';
-import http from 'http';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 config();
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers, // Required for welcome messages
     ]
 });
+
+// Welcome message storage
+const WELCOME_CONFIG_FILE = './welcome-config.json';
+
+function getWelcomeConfig() {
+    if (existsSync(WELCOME_CONFIG_FILE)) {
+        return JSON.parse(readFileSync(WELCOME_CONFIG_FILE, 'utf8'));
+    }
+    return {};
+}
+
+function saveWelcomeConfig(config) {
+    writeFileSync(WELCOME_CONFIG_FILE, JSON.stringify(config, null, 2));
+}
 
 // Admin check
 function isAdmin(userId) {
@@ -54,13 +69,27 @@ async function getCurrentConfig() {
     }
 }
 
+const statuses = [
+    { name: 'Rocket League', type: 3 }, // Watching
+    { name: 'the Community', type: 3 },
+    { name: 'Fusion Esports', type: 3 },
+    { name: 'for new members', type: 3 }
+];
+
+let currentStatusIndex = 0;
+
 client.on('ready', () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
     console.log(`🌐 Managing website at: ${process.env.WEBSITE_API_URL}`);
-    console.log(`🔗 Render URL: ${process.env.RENDER_EXTERNAL_URL || 'Not detected'}`);
     
-    // Set bot status
-    client.user.setActivity('Fusion Esports', { type: 3 }); // 3 = Watching
+    // Set initial status
+    client.user.setActivity(statuses[0].name, { type: statuses[0].type });
+    
+    // Rotate status every 5 minutes
+    setInterval(() => {
+        currentStatusIndex = (currentStatusIndex + 1) % statuses.length;
+        client.user.setActivity(statuses[currentStatusIndex].name, { type: statuses[currentStatusIndex].type });
+    }, 5 * 60 * 1000); // 5 minutes
 });
 
 client.on('interactionCreate', async interaction => {
@@ -122,6 +151,7 @@ client.on('interactionCreate', async interaction => {
                 const hour = interaction.options.getInteger('hour');
                 const minute = interaction.options.getInteger('minute');
                 const name = interaction.options.getString('name');
+                const upcomingCount = interaction.options.getInteger('upcoming_count');
                 
                 const updates = {
                     tournament: {}
@@ -131,6 +161,7 @@ client.on('interactionCreate', async interaction => {
                 if (hour !== null) updates.tournament.hour = hour;
                 if (minute !== null) updates.tournament.minute = minute;
                 if (name) updates.tournament.name = name;
+                if (upcomingCount !== null) updates.tournament.upcomingCount = upcomingCount;
                 
                 await updateWebsiteConfig(updates);
                 
@@ -146,7 +177,8 @@ client.on('interactionCreate', async interaction => {
                     .addFields(
                         { name: 'Day', value: dayName, inline: true },
                         { name: 'Time', value: timeStr, inline: true },
-                        { name: 'Name', value: name || 'unchanged', inline: true }
+                        { name: 'Name', value: name || 'unchanged', inline: true },
+                        { name: 'Upcoming Shown', value: upcomingCount !== null ? `${upcomingCount} dates` : 'unchanged', inline: true }
                     )
                     .setTimestamp();
                 
@@ -246,6 +278,49 @@ client.on('interactionCreate', async interaction => {
                 break;
             }
 
+            case 'welcome-setup': {
+                await interaction.deferReply({ ephemeral: true });
+                
+                const channel = interaction.options.getChannel('channel');
+                const message = interaction.options.getString('message');
+                
+                const welcomeConfig = getWelcomeConfig();
+                welcomeConfig[interaction.guildId] = {
+                    channelId: channel.id,
+                    message: message
+                };
+                saveWelcomeConfig(welcomeConfig);
+                
+                const embed = new EmbedBuilder()
+                    .setColor('#9333ea')
+                    .setTitle('✅ Welcome Messages Configured')
+                    .setDescription(`Welcome messages will be sent to ${channel}`)
+                    .addFields(
+                        { name: 'Message Template', value: message }
+                    )
+                    .setTimestamp();
+                
+                await interaction.editReply({ embeds: [embed] });
+                break;
+            }
+
+            case 'welcome-disable': {
+                await interaction.deferReply({ ephemeral: true });
+                
+                const welcomeConfig = getWelcomeConfig();
+                delete welcomeConfig[interaction.guildId];
+                saveWelcomeConfig(welcomeConfig);
+                
+                const embed = new EmbedBuilder()
+                    .setColor('#9333ea')
+                    .setTitle('✅ Welcome Messages Disabled')
+                    .setDescription('Welcome messages have been turned off.')
+                    .setTimestamp();
+                
+                await interaction.editReply({ embeds: [embed] });
+                break;
+            }
+
             case 'ping': {
                 const embed = new EmbedBuilder()
                     .setColor('#9333ea')
@@ -280,91 +355,43 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// ═══════════════════════════════════════════════════════
-//  HEALTH CHECK SERVER - Keeps Render service awake
-// ═══════════════════════════════════════════════════════
-
-const PORT = process.env.PORT || 3000;
-
-const server = http.createServer((req, res) => {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    
-    if (req.url === '/health') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            status: 'online',
-            bot: client.user?.tag || 'starting',
-            timestamp: new Date().toISOString(),
-            uptime: Math.floor(process.uptime()) + 's',
-            render: process.env.RENDER_EXTERNAL_URL || 'unknown'
-        }));
-    } else if (req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Fusion Bot Status</title>
-                <style>
-                    body { font-family: system-ui; background: #0d1120; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-                    .status { text-align: center; padding: 40px; border: 2px solid #9333ea; border-radius: 20px; background: rgba(147,51,234,0.1); }
-                    h1 { margin: 0 0 10px; color: #a855f7; }
-                    .online { color: #22c55e; font-weight: bold; }
-                </style>
-            </head>
-            <body>
-                <div class="status">
-                    <h1>🤖 Fusion Bot</h1>
-                    <p>Status: <span class="online">ONLINE</span></p>
-                    <p>Logged in as: ${client.user?.tag || 'Starting...'}</p>
-                    <p>Uptime: ${Math.floor(process.uptime())} seconds</p>
-                </div>
-            </html>
-        `);
-    } else {
-        res.writeHead(404);
-        res.end('Not found');
+// Welcome message handler
+client.on(Events.GuildMemberAdd, async (member) => {
+    try {
+        const welcomeConfig = getWelcomeConfig();
+        const config = welcomeConfig[member.guild.id];
+        
+        if (!config) return; // Welcome messages not configured
+        
+        const channel = member.guild.channels.cache.get(config.channelId);
+        if (!channel) return; // Channel not found
+        
+        // Replace placeholders
+        let message = config.message
+            .replace(/{user}/g, `<@${member.id}>`)
+            .replace(/{server}/g, member.guild.name)
+            .replace(/{membercount}/g, member.guild.memberCount.toString());
+        
+        const embed = new EmbedBuilder()
+            .setColor('#9333ea')
+            .setTitle('🎮 Welcome to Fusion Esports!')
+            .setDescription(message)
+            .setThumbnail(member.user.displayAvatarURL())
+            .setFooter({ text: `Member #${member.guild.memberCount}` })
+            .setTimestamp();
+        
+        await channel.send({ embeds: [embed] });
+    } catch (error) {
+        console.error('Error sending welcome message:', error);
     }
 });
 
-server.listen(PORT, () => {
-    console.log(`🌐 Health server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`🏠 Status page: http://localhost:${PORT}/`);
-    
-    if (process.env.RENDER_EXTERNAL_URL) {
-        console.log(`🔗 Your Render URL: ${process.env.RENDER_EXTERNAL_URL}`);
-        console.log(`🔗 Health endpoint: ${process.env.RENDER_EXTERNAL_URL}/health`);
-        console.log(`🔗 Status page: ${process.env.RENDER_EXTERNAL_URL}/`);
-    }
-});
-
-// Self-ping to prevent idle (backup in case UptimeRobot fails)
-if (process.env.RENDER_EXTERNAL_URL) {
-    const selfUrl = process.env.RENDER_EXTERNAL_URL + '/health';
-    
-    setInterval(async () => {
-        try {
-            const response = await fetch(selfUrl);
-            const data = await response.json();
-            console.log(`🔄 Self-ping: ${data.status} | Uptime: ${data.uptime}`);
-        } catch (e) {
-            console.log('⚠️ Self-ping failed:', e.message);
-        }
-    }, 4 * 60 * 1000); // Every 4 minutes
+// Keep-alive mechanism (optional, for free hosting services)
+if (process.env.KEEP_ALIVE === 'true') {
+    setInterval(() => {
+        console.log('⏰ Keep-alive ping');
+    }, 5 * 60 * 1000); // Every 5 minutes
 }
 
-const statuses = ['Rocket League', 'Fusion Esports Website', 'Everyone in the server'];
-let index = 0;
-
-client.on('ready', () => {
-  setInterval(() => {
-    client.user.setActivity(statuses[index], { type: ActivityType.Watching });
-    index = (index + 1) % statuses.length;
-  }, 60000); // 60 seconds
-});
-
-// Login to Discord
+// Login
 client.login(process.env.DISCORD_TOKEN);

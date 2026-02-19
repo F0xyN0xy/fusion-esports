@@ -43,7 +43,12 @@ const commands = [
                 .setMaxValue(59))
         .addStringOption(option =>
             option.setName('name')
-                .setDescription('Tournament name')),
+                .setDescription('Tournament name'))
+        .addIntegerOption(option =>
+            option.setName('upcoming_count')
+                .setDescription('How many upcoming dates to show (1-10)')
+                .setMinValue(1)
+                .setMaxValue(10)),
     
     new SlashCommandBuilder()
         .setName('add-social')
@@ -84,6 +89,23 @@ const commands = [
     new SlashCommandBuilder()
         .setName('view-config')
         .setDescription('View current website configuration')
+        .setDefaultMemberPermissions(0), // Public command - anyone can use
+    
+    new SlashCommandBuilder()
+        .setName('welcome-setup')
+        .setDescription('Configure welcome messages')
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Channel to send welcome messages')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('message')
+                .setDescription('Welcome message (use {user} for mention, {server} for server name)')
+                .setRequired(true)),
+    
+    new SlashCommandBuilder()
+        .setName('welcome-disable')
+        .setDescription('Disable welcome messages')
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);

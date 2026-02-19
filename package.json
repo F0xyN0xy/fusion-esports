@@ -1,6 +1,6 @@
 {
   "name": "fusion-esports-website",
-  "version": "1.0.0",
+  "version": "3.6.0",
   "description": "Fusion Esports website with Discord bot management",
   "type": "module",
   "dependencies": {

@@ -2,7 +2,7 @@ import { getStore } from "@netlify/blobs";
 
 const DEFAULT_CONFIG = {
   discordUrl: "https://discord.gg/Nsng7acTP7",
-  memberCount: "60+",
+  memberCount: "50+",
   onlineCount: "auto",
   discordServerId: "1303027633679896608",
   tournament: {
@@ -20,23 +20,6 @@ const DEFAULT_CONFIG = {
   ],
 };
 
-// Helper to get configured store
-function getConfigStore() {
-  // Explicitly configure for Netlify Blobs
-  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.BLOB_TOKEN;
-  
-  if (!siteID || !token) {
-    console.warn("Missing NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN - using default store");
-  }
-  
-  return getStore({
-    name: "config",
-    siteID: siteID,
-    token: token
-  });
-}
-
 export const handler = async (event, context) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -49,7 +32,7 @@ export const handler = async (event, context) => {
   }
 
   try {
-    const store = getConfigStore();
+    const store = getStore("config");
     const data = await store.get("site-config");
     
     if (data) {

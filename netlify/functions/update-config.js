@@ -2,7 +2,7 @@ import { getStore } from "@netlify/blobs";
 
 const DEFAULT_CONFIG = {
   discordUrl: "https://discord.gg/Nsng7acTP7",
-  memberCount: "60+",
+  memberCount: "50+",
   onlineCount: "auto",
   discordServerId: "1303027633679896608",
   tournament: {
@@ -19,22 +19,6 @@ const DEFAULT_CONFIG = {
     { platform: "website", name: "FoxyNoxy", desc: "Website designer & developer", url: "https://foxynoxy-socials.netlify.app" },
   ],
 };
-
-// Helper to get configured store
-function getConfigStore() {
-  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.BLOB_TOKEN;
-  
-  if (!siteID || !token) {
-    console.warn("Missing NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN - using default store");
-  }
-  
-  return getStore({
-    name: "config",
-    siteID: siteID,
-    token: token
-  });
-}
 
 export const handler = async (event, context) => {
   const headers = {
@@ -80,7 +64,7 @@ export const handler = async (event, context) => {
     const updates = JSON.parse(event.body);
     
     // Get current config
-    const store = getConfigStore();
+    const store = getStore("config");
     let currentConfig = DEFAULT_CONFIG;
     
     try {
