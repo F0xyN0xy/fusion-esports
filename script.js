@@ -337,26 +337,55 @@ function buildCalendar(cfg) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  CONTACT FORM
+//  CONTACT FORM  —  Web3Forms (no email app, fully in-browser)
 // ═══════════════════════════════════════════════════════
 function initContactForm() {
-    const form = document.getElementById("contactForm");
+    const form    = document.getElementById("contactForm");
+    const btn     = document.getElementById("contactBtn");
+    const btnText = document.getElementById("contactBtnText");
+    const errEl   = document.getElementById("contactError");
     if (!form) return;
 
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", async function(e) {
         e.preventDefault();
-        const subject = encodeURIComponent(form.querySelector("#contactSubject")?.value || "Fusion Esports Enquiry");
-        const body    = encodeURIComponent(form.querySelector("#contactMessage")?.value || "");
-        const mailto  = `mailto:foxynoxy07@gmail.com?subject=${subject}&body=${body}`;
-        window.location.href = mailto;
 
-        // Show confirmation
-        const btn = form.querySelector(".contact-submit");
-        const orig = btn.textContent;
-        btn.textContent = "✓ Opening your email app...";
+        // Loading state
         btn.disabled = true;
-        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+        btnText.textContent = "Sending...";
+        errEl.classList.add("hidden");
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch("https://api.web3forms.com/submit", {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                form.classList.add("hidden");
+                document.getElementById("contactSuccess")?.classList.remove("hidden");
+            } else {
+                throw new Error(data.message || "Something went wrong. Please try again.");
+            }
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove("hidden");
+            btn.disabled = false;
+            btnText.textContent = "Send Message";
+        }
     });
+}
+
+function resetContactForm() {
+    const form = document.getElementById("contactForm");
+    const success = document.getElementById("contactSuccess");
+    if (form)    { form.reset(); form.classList.remove("hidden"); }
+    if (success) success.classList.add("hidden");
+    const btn     = document.getElementById("contactBtn");
+    const btnText = document.getElementById("contactBtnText");
+    if (btn)     btn.disabled = false;
+    if (btnText) btnText.textContent = "Send Message";
 }
 
 // ═══════════════════════════════════════════════════════

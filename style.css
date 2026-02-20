@@ -479,3 +479,24 @@ footer { border-top: 1px solid var(--border); padding: 28px 48px; position: rela
     margin: 0;
 }
 
+
+/* contact additions */
+.contact-success {
+    text-align: center;
+    padding: 40px 20px;
+}
+.contact-success-icon { font-size: 3rem; margin-bottom: 12px; }
+.contact-success h3   { font-size: 1.4rem; margin-bottom: 8px; }
+.contact-success p    { color: rgba(255,255,255,0.6); margin-bottom: 24px; }
+.contact-required { color: #f87171; font-size: 0.85em; }
+.contact-optional { color: rgba(255,255,255,0.4); font-weight: 400; font-size: 0.85em; }
+.contact-error {
+    color: #f87171;
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 8px 12px;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 8px;
+}
+.hidden { display: none !important; }
