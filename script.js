@@ -1,7 +1,5 @@
 // ═══════════════════════════════════════════════════════
 //  FUSION ESPORTS — CONFIG SYSTEM (Discord Bot Managed)
-//  Config is updated via Discord bot slash commands
-//  Website fetches config from /api/get-config
 // ═══════════════════════════════════════════════════════
 
 const DEFAULT_CONFIG = {
@@ -74,15 +72,12 @@ async function bootConfig() {
 //  APPLY CONFIG TO THE PAGE
 // ═══════════════════════════════════════════════════════
 function applyConfig(cfg) {
-    // Discord links
     ["navDiscordBtn","mobileDiscordBtn","heroDiscordBtn","tournamentDiscordBtn","ctaDiscordBtn","footerDiscordBtn"]
         .forEach(id => { const el = document.getElementById(id); if (el) el.href = cfg.discordUrl || "#"; });
 
-    // Member count
     const membersEl = document.getElementById("members");
     if (membersEl) membersEl.textContent = cfg.memberCount || "—";
 
-    // Online count
     if (!cfg.onlineCount || cfg.onlineCount === "auto") {
         fetchDiscordOnline(cfg.discordServerId);
     } else {
@@ -90,20 +85,16 @@ function applyConfig(cfg) {
         if (el) el.textContent = cfg.onlineCount;
     }
 
-    // Tournament tag
     const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
     const tag = document.getElementById("tournamentTag");
     if (tag) tag.textContent = `Every ${days[cfg.tournament.dayOfWeek] || "Saturday"}`;
 
-    // Socials
     renderSocials(cfg.socials);
-
-    // Countdown & calendar
     startCountdown(cfg.tournament);
     buildCalendar(cfg.tournament);
 }
 
-// ── Discord widget (online only) ─────────────────────────
+// ── Discord widget ───────────────────────────────────────
 function fetchDiscordOnline(serverId) {
     if (!serverId) return;
     fetch(`https://discord.com/api/guilds/${serverId}/widget.json`)
@@ -158,27 +149,94 @@ function escHtml(str) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  COUNTDOWN & CALENDAR
+//  TOURNAMENT — TIME UTILITIES
+//  All times are stored/configured as UK time (Europe/London).
+//  getNextTournamentUTC returns a real UTC Date object.
 // ═══════════════════════════════════════════════════════
+
+/**
+ * Returns the next tournament occurrence as a true UTC Date.
+ * cfg.hour / cfg.minute are in UK local time (handles BST/GMT automatically).
+ */
+function getNextTournamentUTC(cfg) {
+    const targetDay = cfg.dayOfWeek ?? 6;
+    const targetHour = cfg.hour ?? 18;
+    const targetMinute = cfg.minute ?? 0;
+
+    // Find today's date in UK timezone
+    const nowUTC = new Date();
+
+    // We'll search day by day (max 8) to find the next occurrence
+    for (let offset = 0; offset <= 8; offset++) {
+        const candidate = new Date(nowUTC.getTime() + offset * 86400000);
+        // What day of week is this in UK time?
+        const ukDateStr = candidate.toLocaleDateString("en-GB", { timeZone: "Europe/London", weekday: "short" });
+        const ukDayIndex = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(
+            candidate.toLocaleDateString("en-US", { timeZone: "Europe/London", weekday: "short" }).slice(0,3)
+        );
+
+        if (ukDayIndex === targetDay) {
+            // Build the tournament datetime string in UK timezone
+            // Get the UK date parts for this candidate
+            const ukParts = new Intl.DateTimeFormat("en-GB", {
+                timeZone: "Europe/London",
+                year: "numeric", month: "2-digit", day: "2-digit"
+            }).formatToParts(candidate);
+            const ukYear  = ukParts.find(p => p.type === "year").value;
+            const ukMonth = ukParts.find(p => p.type === "month").value;
+            const ukDay   = ukParts.find(p => p.type === "day").value;
+
+            // Create a Date by parsing the UK local time as if it were UTC,
+            // then adjust for the timezone offset at that moment.
+            // Easiest: use the trick of creating a date string and letting
+            // the browser interpret it in the London timezone.
+            const isoStr = `${ukYear}-${ukMonth}-${ukDay}T${String(targetHour).padStart(2,"0")}:${String(targetMinute).padStart(2,"0")}:00`;
+
+            // Get the UTC equivalent by using Intl to find the offset
+            // We do this by checking what UTC time corresponds to midnight London on that date
+            const approx = new Date(`${ukYear}-${ukMonth}-${ukDay}T12:00:00Z`);
+            const londonMidStr = new Intl.DateTimeFormat("en-US", {
+                timeZone: "Europe/London",
+                hour: "2-digit", minute: "2-digit", hour12: false
+            }).format(approx);
+            // Offset = 12 - london hour at noon UTC
+            const londonNoonHour = parseInt(londonMidStr.split(":")[0]);
+            const offsetHours = 12 - londonNoonHour; // e.g. GMT=0 gives 0, BST=-1 gives +1
+
+            // Tournament UTC = target UK hour - offset
+            const tournUTC = new Date(Date.UTC(
+                parseInt(ukYear), parseInt(ukMonth) - 1, parseInt(ukDay),
+                targetHour - offsetHours, targetMinute, 0
+            ));
+
+            if (tournUTC > nowUTC) return tournUTC;
+        }
+    }
+
+    // Fallback: 7 days from now
+    return new Date(nowUTC.getTime() + 7 * 86400000);
+}
+
+// ── Countdown ────────────────────────────────────────────
 function startCountdown(cfg) {
-    const statusEl = document.getElementById("tournamentStatus");
-    const statusTextEl = document.getElementById("statusText");
-    const labelEl = document.getElementById("countdownLabel");
-    const dEl = document.getElementById("cdDays");
-    const hEl = document.getElementById("cdHours");
-    const mEl = document.getElementById("cdMins");
-    const sEl = document.getElementById("cdSecs");
-    const metaEl = document.getElementById("countdownMeta");
+    const statusEl   = document.getElementById("tournamentStatus");
+    const statusTxt  = document.getElementById("statusText");
+    const labelEl    = document.getElementById("countdownLabel");
+    const dEl        = document.getElementById("cdDays");
+    const hEl        = document.getElementById("cdHours");
+    const mEl        = document.getElementById("cdMins");
+    const sEl        = document.getElementById("cdSecs");
+    const metaEl     = document.getElementById("countdownMeta");
 
     function tick() {
-        const now = new Date();
-        const next = getNextTournamentDate(cfg);
+        const now  = new Date();
+        const next = getNextTournamentUTC(cfg);
         const diff = next - now;
 
-        if (diff < 0) {
-            if (statusEl) statusEl.innerHTML = '<span class="status-dot status-live"></span><span>LIVE NOW</span>';
-            if (statusTextEl) statusTextEl.textContent = "LIVE NOW";
-            if (labelEl) labelEl.textContent = "Tournament in progress!";
+        if (diff <= 0) {
+            if (statusEl)  statusEl.innerHTML = '<span class="status-dot status-live"></span><span>LIVE NOW</span>';
+            if (statusTxt) statusTxt.textContent = "LIVE NOW";
+            if (labelEl)   labelEl.textContent = "Tournament in progress!";
             if (dEl) dEl.textContent = "00";
             if (hEl) hEl.textContent = "00";
             if (mEl) mEl.textContent = "00";
@@ -186,10 +244,11 @@ function startCountdown(cfg) {
             return;
         }
 
-        const days = Math.floor(diff / 864e5);
-        const hrs = Math.floor((diff % 864e5) / 36e5);
-        const mins = Math.floor((diff % 36e5) / 6e4);
-        const secs = Math.floor((diff % 6e4) / 1e3);
+        const totalSecs = Math.floor(diff / 1000);
+        const days = Math.floor(totalSecs / 86400);
+        const hrs  = Math.floor((totalSecs % 86400) / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
 
         if (dEl) dEl.textContent = String(days).padStart(2, "0");
         if (hEl) hEl.textContent = String(hrs).padStart(2, "0");
@@ -197,59 +256,247 @@ function startCountdown(cfg) {
         if (sEl) sEl.textContent = String(secs).padStart(2, "0");
 
         if (days > 1) {
-            if (statusEl) statusEl.innerHTML = '<span class="status-dot status-upcoming"></span><span>Upcoming</span>';
-            if (statusTextEl) statusTextEl.textContent = "Upcoming";
+            if (statusEl)  statusEl.innerHTML = '<span class="status-dot status-upcoming"></span><span>Upcoming</span>';
+            if (statusTxt) statusTxt.textContent = "Upcoming";
         } else if (days === 1) {
-            if (statusEl) statusEl.innerHTML = '<span class="status-dot status-tomorrow"></span><span>Tomorrow!</span>';
-            if (statusTextEl) statusTextEl.textContent = "Tomorrow!";
+            if (statusEl)  statusEl.innerHTML = '<span class="status-dot status-tomorrow"></span><span>Tomorrow!</span>';
+            if (statusTxt) statusTxt.textContent = "Tomorrow!";
         } else if (hrs < 6) {
-            if (statusEl) statusEl.innerHTML = '<span class="status-dot status-soon"></span><span>Starting Soon</span>';
-            if (statusTextEl) statusTextEl.textContent = "Starting Soon";
+            if (statusEl)  statusEl.innerHTML = '<span class="status-dot status-soon"></span><span>Starting Soon</span>';
+            if (statusTxt) statusTxt.textContent = "Starting Soon";
         } else {
-            if (statusEl) statusEl.innerHTML = '<span class="status-dot status-today"></span><span>Today!</span>';
-            if (statusTextEl) statusTextEl.textContent = "Today!";
+            if (statusEl)  statusEl.innerHTML = '<span class="status-dot status-today"></span><span>Today!</span>';
+            if (statusTxt) statusTxt.textContent = "Today!";
         }
 
         if (metaEl) {
-            const dateStr = next.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-            const timeStr = next.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
-            metaEl.textContent = `${dateStr} at ${timeStr} UK Time`;
+            // Show UK time and user's local time
+            const ukTime    = next.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+            const ukDate    = next.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" });
+            const localTime = next.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+            // Check if local time differs from UK time
+            const ukOffset    = getUKOffsetLabel(next);
+            const localOffset = getLocalOffsetLabel();
+            const showLocal   = ukOffset !== localOffset;
+
+            metaEl.innerHTML = `${ukDate} &nbsp;·&nbsp; <strong>${ukTime} UK Time</strong>`
+                + (showLocal ? `<br><span style="font-size:0.85em;opacity:0.7">Your local time: ${localTime}</span>` : "");
         }
     }
 
+    if (window._countdownInterval) clearInterval(window._countdownInterval);
     tick();
-    setInterval(tick, 1000);
+    window._countdownInterval = setInterval(tick, 1000);
 }
 
-function getNextTournamentDate(cfg) {
-    const now = new Date();
-    const ukNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/London" }));
-    const target = new Date(ukNow);
-    target.setHours(cfg.hour || 18, cfg.minute || 0, 0, 0);
-    const targetDay = cfg.dayOfWeek ?? 6;
-    const currentDay = target.getDay();
-    let daysToAdd = (targetDay - currentDay + 7) % 7;
-    if (daysToAdd === 0 && ukNow >= target) daysToAdd = 7;
-    target.setDate(target.getDate() + daysToAdd);
-    return new Date(target.toLocaleString("en-US", { timeZone: "Europe/London" }));
+function getUKOffsetLabel(date) {
+    return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", timeZoneName: "short" })
+        .formatToParts(date).find(p => p.type === "timeZoneName")?.value || "";
+}
+function getLocalOffsetLabel() {
+    return new Intl.DateTimeFormat("en-GB", { timeZoneName: "short" })
+        .formatToParts(new Date()).find(p => p.type === "timeZoneName")?.value || "";
 }
 
+// ── Calendar ─────────────────────────────────────────────
 function buildCalendar(cfg) {
-    const container = document.getElementById("upcomingList");
+    // Support both id names for backwards compatibility
+    const container = document.getElementById("calendarList") || document.getElementById("upcomingList");
     if (!container) return;
     container.innerHTML = "";
+
+    const tzEl = document.getElementById("calendarTz");
+    if (tzEl) tzEl.textContent = "UK Time";
+
     const count = cfg.upcomingCount || 5;
-    const now = new Date();
-    let next = getNextTournamentDate(cfg);
+    let next = getNextTournamentUTC(cfg);
+
     for (let i = 0; i < count; i++) {
         const li = document.createElement("li");
         li.className = "upcoming-item";
-        const dateStr = next.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-        const timeStr = next.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
-        li.innerHTML = `<span class="upcoming-date">${dateStr}</span><span class="upcoming-time">${timeStr} UK</span>`;
+
+        const ukDate = next.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
+        const ukTime = next.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+        const localTime = next.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        const ukOffset    = getUKOffsetLabel(next);
+        const localOffset = getLocalOffsetLabel();
+        const showLocal   = ukOffset !== localOffset;
+
+        li.innerHTML = `
+            <span class="upcoming-date">${ukDate}</span>
+            <span class="upcoming-time">
+                ${ukTime} UK${showLocal ? `<br><small style="opacity:0.6">${localTime} local</small>` : ""}
+            </span>`;
         container.appendChild(li);
-        next = new Date(next.getTime() + 7 * 864e5);
+
+        // Add exactly 7 days (in UTC) for next week
+        next = new Date(next.getTime() + 7 * 86400 * 1000);
     }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONTACT FORM
+// ═══════════════════════════════════════════════════════
+function initContactForm() {
+    const form = document.getElementById("contactForm");
+    if (!form) return;
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const subject = encodeURIComponent(form.querySelector("#contactSubject")?.value || "Fusion Esports Enquiry");
+        const body    = encodeURIComponent(form.querySelector("#contactMessage")?.value || "");
+        const mailto  = `mailto:foxynoxy07@gmail.com?subject=${subject}&body=${body}`;
+        window.location.href = mailto;
+
+        // Show confirmation
+        const btn = form.querySelector(".contact-submit");
+        const orig = btn.textContent;
+        btn.textContent = "✓ Opening your email app...";
+        btn.disabled = true;
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN PANEL  (Ctrl+Shift+A)
+// ═══════════════════════════════════════════════════════
+document.addEventListener("keydown", e => {
+    if (e.ctrlKey && e.shiftKey && e.key === "A") openAdmin();
+});
+
+function openAdmin() {
+    const stored = localStorage.getItem("adminPass") || "fusion";
+    document.getElementById("adminLogin")?.classList.remove("hidden");
+}
+
+function checkLogin() {
+    const stored = localStorage.getItem("adminPass") || "fusion";
+    const input  = document.getElementById("loginInput")?.value;
+    if (input === stored) {
+        document.getElementById("adminLogin")?.classList.add("hidden");
+        document.getElementById("adminOverlay")?.classList.remove("hidden");
+        loadAdminPanel();
+    } else {
+        const errEl = document.getElementById("loginError");
+        if (errEl) errEl.textContent = "Incorrect password.";
+    }
+}
+
+function closeAdmin() { document.getElementById("adminOverlay")?.classList.add("hidden"); }
+
+function switchTab(tab) {
+    document.querySelectorAll(".admin-body").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".admin-tab").forEach(el => el.classList.remove("active"));
+    document.getElementById(`tab-${tab}`)?.classList.remove("hidden");
+    document.querySelectorAll(".admin-tab").forEach(el => { if (el.textContent.toLowerCase().includes(tab)) el.classList.add("active"); });
+}
+
+function loadAdminPanel() {
+    const cfg = mergeWithDefaults(getCachedConfig() || {});
+    const t = cfg.tournament;
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ""; };
+    set("cfg-discordUrl",  cfg.discordUrl);
+    set("cfg-memberCount", cfg.memberCount);
+    set("cfg-onlineCount", cfg.onlineCount === "auto" ? "" : cfg.onlineCount);
+    set("cfg-tournDay",    t.dayOfWeek);
+    set("cfg-tournHour",   t.hour);
+    set("cfg-tournMinute", t.minute);
+    set("cfg-tournName",   t.name);
+    set("cfg-tournCount",  t.upcomingCount);
+
+    renderSocialsEditor(cfg.socials);
+}
+
+function saveConfig() {
+    const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+    const newCfg = {
+        discordUrl:  get("cfg-discordUrl")  || DEFAULT_CONFIG.discordUrl,
+        memberCount: get("cfg-memberCount") || DEFAULT_CONFIG.memberCount,
+        onlineCount: get("cfg-onlineCount") || "auto",
+        discordServerId: DEFAULT_CONFIG.discordServerId,
+        tournament: {
+            dayOfWeek:     parseInt(get("cfg-tournDay"))    || 6,
+            hour:          parseInt(get("cfg-tournHour"))   || 18,
+            minute:        parseInt(get("cfg-tournMinute")) || 0,
+            name:          get("cfg-tournName")             || "Fusion Weekly",
+            upcomingCount: parseInt(get("cfg-tournCount"))  || 5,
+        },
+        socials: readSocialsEditor(),
+    };
+    setCachedConfig(newCfg);
+    applyConfig(newCfg);
+    closeAdmin();
+}
+
+function resetToDefaults() {
+    if (!confirm("Reset all settings to defaults?")) return;
+    localStorage.removeItem("fusionConfigCache");
+    applyConfig(DEFAULT_CONFIG);
+    closeAdmin();
+}
+
+function savePassword() {
+    const np = document.getElementById("cfg-newPass")?.value;
+    const cp = document.getElementById("cfg-confirmPass")?.value;
+    const msg = document.getElementById("passMsg");
+    if (!np || np.length < 4) { if (msg) msg.textContent = "Password must be at least 4 characters."; return; }
+    if (np !== cp) { if (msg) msg.textContent = "Passwords do not match."; return; }
+    localStorage.setItem("adminPass", np);
+    if (msg) msg.textContent = "Password updated!";
+}
+
+// ── Socials editor ───────────────────────────────────────
+function renderSocialsEditor(socials) {
+    const editor = document.getElementById("socialsEditor");
+    if (!editor) return;
+    editor.innerHTML = "";
+    (socials || []).forEach((s, i) => {
+        const row = document.createElement("div");
+        row.className = "social-editor-row";
+        row.dataset.index = i;
+        row.innerHTML = `
+            <select class="se-platform">
+                ${["youtube","tiktok","twitter","twitch","instagram","website"].map(p =>
+                    `<option value="${p}" ${s.platform===p?"selected":""}>${p}</option>`).join("")}
+            </select>
+            <input class="se-name" type="text" placeholder="Name" value="${escHtml(s.name)}">
+            <input class="se-desc" type="text" placeholder="Description" value="${escHtml(s.desc)}">
+            <input class="se-url"  type="text" placeholder="URL" value="${escHtml(s.url)}">
+            <button onclick="this.closest('.social-editor-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:1.1rem;">✕</button>
+        `;
+        editor.appendChild(row);
+    });
+}
+
+function addSocialRow() {
+    const editor = document.getElementById("socialsEditor");
+    if (!editor) return;
+    const row = document.createElement("div");
+    row.className = "social-editor-row";
+    row.innerHTML = `
+        <select class="se-platform">
+            ${["youtube","tiktok","twitter","twitch","instagram","website"].map(p =>
+                `<option value="${p}">${p}</option>`).join("")}
+        </select>
+        <input class="se-name" type="text" placeholder="Name">
+        <input class="se-desc" type="text" placeholder="Description">
+        <input class="se-url"  type="text" placeholder="URL">
+        <button onclick="this.closest('.social-editor-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:1.1rem;">✕</button>
+    `;
+    editor.appendChild(row);
+}
+
+function readSocialsEditor() {
+    const rows = document.querySelectorAll(".social-editor-row");
+    return Array.from(rows).map(row => ({
+        platform: row.querySelector(".se-platform")?.value || "website",
+        name:     row.querySelector(".se-name")?.value.trim() || "",
+        desc:     row.querySelector(".se-desc")?.value.trim() || "",
+        url:      row.querySelector(".se-url")?.value.trim()  || "",
+    })).filter(s => s.name);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -258,15 +505,23 @@ function buildCalendar(cfg) {
 const navbar = document.getElementById("navbar");
 window.addEventListener("scroll", () => { navbar.classList.toggle("scrolled", window.scrollY > 40); }, { passive: true });
 
-const hamburger = document.getElementById("hamburger");
+const hamburger  = document.getElementById("hamburger");
 const mobileMenu = document.getElementById("mobileMenu");
-hamburger?.addEventListener("click", () => { mobileMenu.style.display = mobileMenu.style.display === "flex" ? "none" : "flex"; });
+hamburger?.addEventListener("click", () => {
+    mobileMenu.style.display = mobileMenu.style.display === "flex" ? "none" : "flex";
+});
 function closeMobile() { if (mobileMenu) mobileMenu.style.display = "none"; }
 
 const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.animation = "fadeUp 0.6s ease both"; observer.unobserve(entry.target); } });
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.animation = "fadeUp 0.6s ease both";
+            observer.unobserve(entry.target);
+        }
+    });
 }, { threshold: 0.1 });
 document.querySelectorAll(".feature-card, .stat-card").forEach(el => { el.style.opacity = "0"; observer.observe(el); });
 
 // ── BOOT ────────────────────────────────────────────────
 bootConfig();
+initContactForm();

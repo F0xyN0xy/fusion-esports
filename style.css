@@ -414,3 +414,68 @@ footer { border-top: 1px solid var(--border); padding: 28px 48px; position: rela
     .admin-panel { max-height: 95vh; border-radius: 16px; }
     .social-editor-inner { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   CONTACT SECTION
+═══════════════════════════════════════════════════════ */
+.contact-section {
+    padding: 100px 24px;
+    max-width: 680px;
+    margin: 0 auto;
+}
+.contact-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 40px;
+    backdrop-filter: blur(10px);
+}
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.contact-field label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.03em;
+}
+.contact-field input,
+.contact-field textarea {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+}
+.contact-field input:focus,
+.contact-field textarea:focus {
+    border-color: rgba(147,51,234,0.6);
+}
+.contact-field input::placeholder,
+.contact-field textarea::placeholder {
+    color: rgba(255,255,255,0.3);
+}
+.contact-submit {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+}
+.contact-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.35);
+    margin: 0;
+}
+
