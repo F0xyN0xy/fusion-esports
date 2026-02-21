@@ -256,6 +256,10 @@ function buildCommands() {
         new SlashCommandBuilder().setName('welcome-setup').setDescription('Configure welcome messages')
             .addChannelOption(o => o.setName('channel').setDescription('Channel for welcome messages').setRequired(true))
             .addStringOption(o => o.setName('message').setDescription('Template — use {user}, {server}, {membercount}').setRequired(true)),
+        new SlashCommandBuilder().setName('fsn-apply').setDescription('Apply FSN | tag to a member or the whole server')
+            .addUserOption(o => o.setName('user').setDescription('Specific member to tag (leave empty to apply to everyone)')),
+        new SlashCommandBuilder().setName('fsn-remove').setDescription('Remove FSN | tag from a member or the whole server')
+            .addUserOption(o => o.setName('user').setDescription('Specific member to untag (leave empty to remove from everyone)')),
         new SlashCommandBuilder().setName('welcome-disable').setDescription('Disable welcome messages'),
     ].map(c => c.toJSON());
 }
@@ -316,6 +320,7 @@ client.on('interactionCreate', async interaction => {
         'set-status','welcome-setup','welcome-disable',
         'yt-add','yt-remove','yt-list',
         'tournament-reminder','scrim-ping',
+        'fsn-apply','fsn-remove',
     ];
 
     if (adminOnly.includes(interaction.commandName) && !isAdmin(interaction.user.id)) {
@@ -730,6 +735,99 @@ client.on('interactionCreate', async interaction => {
                 break;
             }
 
+
+            // ────────────────────────────────────────────
+            //  FSN NICKNAME COMMANDS
+            // ────────────────────────────────────────────
+            case 'fsn-apply': {
+                await interaction.deferReply({ ephemeral: true });
+                const target = interaction.options.getMember('user');
+
+                if (target) {
+                    // Apply to a single member
+                    const result = await applyNickname(target);
+                    if (result.ok) {
+                        await interaction.editReply({ embeds: [new EmbedBuilder().setColor('#9333ea').setTitle('✅ Nickname Applied').setDescription(`Set ${target}'s nickname to **${buildNickname(target)}**`).setTimestamp()] });
+                    } else {
+                        await interaction.editReply(`❌ Could not update nickname for ${target}: ${result.reason}`);
+                    }
+                } else {
+                    // Apply to everyone in the server
+                    await interaction.editReply({ embeds: [new EmbedBuilder().setColor('#9333ea').setTitle('⏳ Applying FSN tags...').setDescription('This may take a moment for large servers.').setTimestamp()] });
+
+                    const members = await interaction.guild.members.fetch();
+                    let success = 0, skipped = 0, failed = 0;
+
+                    for (const [, member] of members) {
+                        const result = await applyNickname(member);
+                        if (result.ok)                         success++;
+                        else if (result.reason === 'bot' || result.reason === 'owner' || result.reason === 'already set') skipped++;
+                        else                                   failed++;
+                        // Small delay to avoid rate limits
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+
+                    await interaction.editReply({ embeds: [new EmbedBuilder()
+                        .setColor('#9333ea')
+                        .setTitle('✅ FSN Tags Applied')
+                        .addFields(
+                            { name: '✅ Updated',  value: `${success}`,  inline: true },
+                            { name: '⏭️ Skipped',  value: `${skipped}`,  inline: true },
+                            { name: '❌ Failed',   value: `${failed}`,   inline: true },
+                        )
+                        .setDescription('Skipped = bots, server owner, or already had FSN tag.')
+                        .setTimestamp()
+                    ] });
+                }
+                break;
+            }
+
+            case 'fsn-remove': {
+                await interaction.deferReply({ ephemeral: true });
+                const target = interaction.options.getMember('user');
+
+                async function removeTag(member) {
+                    if (member.user.bot) return { ok: false, reason: 'bot' };
+                    if (member.id === member.guild.ownerId) return { ok: false, reason: 'owner' };
+                    if (!member.nickname?.startsWith(FSN_PREFIX)) return { ok: false, reason: 'no tag' };
+                    try {
+                        const clean = member.nickname.replace(/^FSN \| /i, '').trim();
+                        await member.setNickname(clean || null, 'FSN tag removed by Fusion Esports bot');
+                        return { ok: true };
+                    } catch (err) { return { ok: false, reason: err.message }; }
+                }
+
+                if (target) {
+                    const result = await removeTag(target);
+                    if (result.ok) {
+                        await interaction.editReply({ embeds: [new EmbedBuilder().setColor('#9333ea').setTitle('✅ FSN Tag Removed').setDescription(`Removed FSN tag from ${target}.`).setTimestamp()] });
+                    } else {
+                        await interaction.editReply(`❌ Could not remove tag from ${target}: ${result.reason}`);
+                    }
+                } else {
+                    await interaction.editReply({ embeds: [new EmbedBuilder().setColor('#9333ea').setTitle('⏳ Removing FSN tags...').setDescription('Working through the server...').setTimestamp()] });
+                    const members = await interaction.guild.members.fetch();
+                    let success = 0, skipped = 0, failed = 0;
+                    for (const [, member] of members) {
+                        const result = await removeTag(member);
+                        if (result.ok) success++;
+                        else if (['bot','owner','no tag'].includes(result.reason)) skipped++;
+                        else failed++;
+                        await new Promise(r => setTimeout(r, 300));
+                    }
+                    await interaction.editReply({ embeds: [new EmbedBuilder()
+                        .setColor('#9333ea').setTitle('✅ FSN Tags Removed')
+                        .addFields(
+                            { name: '✅ Removed',  value: `${success}`,  inline: true },
+                            { name: '⏭️ Skipped',  value: `${skipped}`,  inline: true },
+                            { name: '❌ Failed',   value: `${failed}`,   inline: true },
+                        )
+                        .setTimestamp()
+                    ] });
+                }
+                break;
+            }
+
             default:
                 await interaction.reply({ content: '❌ Unknown command.', ephemeral: true });
         }
@@ -740,6 +838,34 @@ client.on('interactionCreate', async interaction => {
         else await interaction.reply({ embeds: [errEmbed], ephemeral: true });
     }
 });
+
+
+// ═══════════════════════════════════════════════════════
+//  NICKNAME HELPER
+// ═══════════════════════════════════════════════════════
+const FSN_PREFIX = 'FSN | ';
+
+function buildNickname(member) {
+    // Use existing display name but strip any existing FSN | prefix first
+    const base = (member.nickname || member.user.username).replace(/^FSN \| /i, '').trim();
+    const full  = `${FSN_PREFIX}${base}`;
+    // Discord nickname max is 32 chars
+    return full.length <= 32 ? full : full.substring(0, 32);
+}
+
+async function applyNickname(member) {
+    // Skip bots and the server owner (can't change owner nick)
+    if (member.user.bot)       return { ok: false, reason: 'bot' };
+    if (member.id === member.guild.ownerId) return { ok: false, reason: 'owner' };
+    const desired = buildNickname(member);
+    if (member.nickname === desired) return { ok: false, reason: 'already set' };
+    try {
+        await member.setNickname(desired, 'FSN tag applied by Fusion Esports bot');
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, reason: err.message };
+    }
+}
 
 // ═══════════════════════════════════════════════════════
 //  WELCOME HANDLER
@@ -757,6 +883,8 @@ client.on(Events.GuildMemberAdd, async (member) => {
             .replace(/{membercount}/g, member.guild.memberCount.toString());
         await channel.send({ embeds: [new EmbedBuilder().setColor('#9333ea').setTitle('🎮 Welcome to Fusion Esports!').setDescription(msg)
             .setThumbnail(member.user.displayAvatarURL()).setFooter({ text: `Member #${member.guild.memberCount}` }).setTimestamp()] });
+        // Apply FSN | nickname automatically
+        await applyNickname(member);
     } catch (err) { console.error('Welcome error:', err); }
 });
 
