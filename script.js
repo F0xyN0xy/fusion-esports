@@ -22,6 +22,10 @@ const DEFAULT_CONFIG = {
     ],
 };
 
+function escHtml(str) {
+    return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
 // ── Local cache helpers ──────────────────────────────────
 function getCachedConfig() {
     try {
@@ -92,6 +96,8 @@ function applyConfig(cfg) {
     renderSocials(cfg.socials);
     startCountdown(cfg.tournament);
     buildCalendar(cfg.tournament);
+    renderWinner(cfg.lastWinner);
+    renderCoaching(cfg.coaching);
 }
 
 // ── Discord widget ───────────────────────────────────────
@@ -337,7 +343,90 @@ function buildCalendar(cfg) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  CONTACT FORM  —  Web3Forms (no email app, fully in-browser)
+//  WINNER RENDERER
+// ═══════════════════════════════════════════════════════
+function renderWinner(w) {
+    const card  = document.getElementById("winnerCard");
+    const empty = document.getElementById("winnerEmpty");
+    if (!card || !empty) return;
+
+    if (!w || !w.first) {
+        card.classList.add("hidden");
+        empty.classList.remove("hidden");
+        return;
+    }
+
+    card.classList.remove("hidden");
+    empty.classList.add("hidden");
+
+    const dateEl = document.getElementById("winnerDate");
+    if (dateEl) dateEl.textContent = w.date || "";
+
+    const w1 = document.getElementById("winner1");
+    const w2 = document.getElementById("winner2");
+    const w3 = document.getElementById("winner3");
+    const p2  = document.getElementById("podium2");
+    const p3  = document.getElementById("podium3");
+    const note = document.getElementById("winnerNote");
+
+    if (w1) w1.textContent = w.first || "";
+    if (w2) w2.textContent = w.second || "";
+    if (w3) w3.textContent = w.third || "";
+    if (p2)  p2.style.display  = w.second ? "" : "none";
+    if (p3)  p3.style.display  = w.third  ? "" : "none";
+    if (note) {
+        note.textContent = w.note || "";
+        note.style.display = w.note ? "" : "none";
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  COACHING RENDERER
+// ═══════════════════════════════════════════════════════
+function renderCoaching(sessions) {
+    const grid  = document.getElementById("coachingGrid");
+    const empty = document.getElementById("coachingEmpty");
+    if (!grid || !empty) return;
+
+    grid.innerHTML = "";
+
+    if (!sessions || !sessions.length) {
+        empty.classList.remove("hidden");
+        return;
+    }
+
+    empty.classList.add("hidden");
+
+    sessions.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "coaching-card";
+        card.innerHTML = `
+            <div class="coaching-header">
+                <div class="coaching-topic">${escHtml(s.topic)}</div>
+                <div class="coaching-coach">by ${escHtml(s.coach)}</div>
+            </div>
+            <div class="coaching-details">
+                <div class="coaching-detail"><span>📅</span>${escHtml(s.date)}</div>
+                <div class="coaching-detail"><span>🕐</span>${escHtml(s.time)} UK</div>
+                <div class="coaching-detail"><span>🏅</span>${escHtml(s.rank || 'All ranks')}</div>
+                ${s.spots ? `<div class="coaching-detail"><span>🪑</span>${escHtml(String(s.spots))} spots</div>` : ""}
+            </div>
+            <a id="coachingDiscordBtn" href="#" target="_blank" class="coaching-join btn-primary">Join on Discord →</a>
+        `;
+        // wire up the discord link
+        const btn = card.querySelector(".coaching-join");
+        // will be set by applyConfig discord url — store for later
+        btn.dataset.discord = "true";
+        grid.appendChild(card);
+    });
+
+    // Set discord links
+    const discordUrl = document.getElementById("heroDiscordBtn")?.href || "#";
+    grid.querySelectorAll("[data-discord='true']").forEach(el => el.href = discordUrl);
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONTACT FORM  —  Web3Forms
 // ═══════════════════════════════════════════════════════
 function initContactForm() {
     const form    = document.getElementById("contactForm");

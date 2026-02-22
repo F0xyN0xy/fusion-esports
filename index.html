@@ -33,6 +33,8 @@
             <a href="#features">Features</a>
             <a href="#stats">Community</a>
             <a href="#tournament">Tournaments</a>
+            <a href="#winner">Results</a>
+            <a href="#coaching">Coaching</a>
             <a href="#socials">Team</a>
             <a href="#contact">Contact</a>
         </div>
@@ -48,6 +50,8 @@
         <a href="#features" onclick="closeMobile()">Features</a>
         <a href="#stats" onclick="closeMobile()">Community</a>
         <a href="#tournament" onclick="closeMobile()">Tournaments</a>
+        <a href="#winner" onclick="closeMobile()">Results</a>
+        <a href="#coaching" onclick="closeMobile()">Coaching</a>
         <a href="#socials" onclick="closeMobile()">Team</a>
         <a href="#contact" onclick="closeMobile()">Contact</a>
         <a id="mobileDiscordBtn" href="#" target="_blank" class="mobile-discord">Join Discord</a>
@@ -174,6 +178,48 @@
         <p>The people behind Fusion Esports — follow our owners and creators.</p>
     </div>
     <div class="socials-grid" id="socialsGrid"></div>
+</section>
+
+<!-- LAST WINNER -->
+<section class="winner-section" id="winner">
+    <div class="section-header">
+        <span class="section-tag">Latest Results</span>
+        <h2>Tournament <span class="gradient-text">Winners</span></h2>
+        <p>Last week's Fusion Weekly results.</p>
+    </div>
+    <div id="winnerCard" class="winner-card hidden">
+        <div class="winner-date" id="winnerDate"></div>
+        <div class="winner-podium">
+            <div class="podium-item podium-second" id="podium2">
+                <div class="podium-medal">🥈</div>
+                <div class="podium-name" id="winner2"></div>
+                <div class="podium-place">2nd</div>
+            </div>
+            <div class="podium-item podium-first" id="podium1">
+                <div class="podium-medal">🥇</div>
+                <div class="podium-name" id="winner1"></div>
+                <div class="podium-place">1st Place</div>
+            </div>
+            <div class="podium-item podium-third" id="podium3">
+                <div class="podium-medal">🥉</div>
+                <div class="podium-name" id="winner3"></div>
+                <div class="podium-place">3rd</div>
+            </div>
+        </div>
+        <p class="winner-note" id="winnerNote"></p>
+    </div>
+    <div id="winnerEmpty" class="winner-empty">No results yet — check back after the next tournament!</div>
+</section>
+
+<!-- COACHING -->
+<section class="coaching-section" id="coaching">
+    <div class="section-header">
+        <span class="section-tag">Free Coaching</span>
+        <h2>Upcoming <span class="gradient-text">Sessions</span></h2>
+        <p>Book your spot and get coached by our top players.</p>
+    </div>
+    <div id="coachingGrid" class="coaching-grid"></div>
+    <div id="coachingEmpty" class="coaching-empty hidden">No sessions scheduled yet — check back soon!</div>
 </section>
 
 <!-- CONTACT -->
