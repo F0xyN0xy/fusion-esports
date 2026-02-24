@@ -1,5 +1,4 @@
 export const handler = async (event) => {
-  // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -20,17 +19,19 @@ export const handler = async (event) => {
   const GUILD_ID = '1303027633679896608';
 
   try {
-    const { userId, roleId, action } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { userId, roleId, action } = body;
 
     if (!userId || !roleId || !action) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing userId, roleId or action' }),
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Missing fields', received: body }),
       };
     }
 
     const url = `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${userId}/roles/${roleId}`;
-    const response = await fetch(url, {
+    const discordResponse = await fetch(url, {
       method: action === 'add' ? 'PUT' : 'DELETE',
       headers: {
         Authorization: `Bot ${BOT_TOKEN}`,
@@ -38,17 +39,28 @@ export const handler = async (event) => {
       },
     });
 
-    if (!response.ok && response.status !== 204) {
-      const error = await response.json();
-      throw new Error(error.message || 'Discord API error');
+    // Log what Discord returned
+    const discordStatus = discordResponse.status;
+    let discordBody = '';
+    try { discordBody = await discordResponse.text(); } catch (_) {}
+
+    if (discordStatus !== 204 && !discordResponse.ok) {
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ 
+          error: 'Discord API error', 
+          status: discordStatus,
+          discord_response: discordBody,
+          bot_token_set: !!BOT_TOKEN,
+          url_called: url,
+        }),
+      };
     }
 
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ success: true }),
     };
   } catch (error) {
