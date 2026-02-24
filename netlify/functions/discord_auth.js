@@ -27,7 +27,17 @@ export const handler = async (event) => {
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
-      throw new Error(tokenData.error_description || 'Token exchange failed');
+      // Return full Discord error for debugging
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ 
+          error: 'Token exchange failed',
+          discord_error: tokenData,
+          redirect_uri_used: REDIRECT_URI,
+          client_id_used: CLIENT_ID,
+        }),
+      };
     }
 
     const userResponse = await fetch('https://discord.com/api/users/@me', {
