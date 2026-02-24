@@ -18,16 +18,32 @@ export const handler = async (event) => {
 
     const messages = await response.json();
 
-    const announcements = messages.map((msg) => ({
-      id: msg.id,
-      content: msg.content,
-      author: msg.author.username,
-      authorAvatar: msg.author.avatar
-        ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-        : null,
-      timestamp: msg.timestamp,
-      attachments: msg.attachments.map((a) => a.url),
-    }));
+    const cleanContent = (content) => {
+      return content
+        .replace(/<@&\d+>/g, '')       // Remove role mentions
+        .replace(/<@!?\d+>/g, '')       // Remove user mentions
+        .replace(/<#\d+>/g, '')         // Remove channel mentions
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+        .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
+        .replace(/__(.*?)__/g, '$1')     // Remove underline markdown
+        .replace(/~~(.*?)~~/g, '$1')     // Remove strikethrough
+        .replace(/\|\|(.*?)\|\|/g, '$1') // Remove spoilers
+        .replace(/`(.*?)`/g, '$1')       // Remove inline code
+        .trim();
+    };
+
+    const announcements = messages
+      .filter(msg => msg.content || msg.attachments.length > 0)
+      .map((msg) => ({
+        id: msg.id,
+        content: cleanContent(msg.content || ''),
+        author: msg.author.username,
+        authorAvatar: msg.author.avatar
+          ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+          : null,
+        timestamp: msg.timestamp,
+        attachments: msg.attachments.map((a) => a.url),
+      }));
 
     return {
       statusCode: 200,
