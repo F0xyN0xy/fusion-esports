@@ -1,6 +1,4 @@
-const fetch = require('node-fetch');
-
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const { code } = event.queryStringParameters || {};
   const CLIENT_ID = '1473722302968631588';
   const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
@@ -14,7 +12,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Exchange code for token
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -33,14 +30,12 @@ exports.handler = async (event) => {
       throw new Error(tokenData.error_description || 'Token exchange failed');
     }
 
-    // Get user info
     const userResponse = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
     const user = await userResponse.json();
 
-    // Get guild member info (to check roles etc)
     const memberResponse = await fetch(
       `https://discord.com/api/users/@me/guilds/1303027633679896608/member`,
       {

@@ -1,6 +1,4 @@
-const fetch = require('node-fetch');
-
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN;
   const CHANNEL_ID = '1472272446408102121';
 
