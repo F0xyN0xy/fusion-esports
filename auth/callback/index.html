@@ -13,16 +13,8 @@
       height: 100vh;
       margin: 0;
     }
-    .container {
-      text-align: center;
-    }
-    .logo {
-      width: 80px;
-      margin-bottom: 20px;
-    }
-    p {
-      color: #ffffff99;
-    }
+    .container { text-align: center; }
+    p { color: #ffffff99; }
   </style>
 </head>
 <body>
@@ -32,10 +24,9 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-
     if (code) {
-      // Redirect back to Flutter app with the code
       window.location.href = `fusionesports://auth?code=${code}`;
+      setTimeout(() => window.close(), 1000);
     } else {
       document.querySelector('p').textContent = 'Login failed. Please try again.';
     }
