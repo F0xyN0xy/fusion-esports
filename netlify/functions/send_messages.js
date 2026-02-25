@@ -23,31 +23,16 @@ export const handler = async (event) => {
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
   try {
-    const { channelId, message, username, userId, avatar } = JSON.parse(event.body);
+    const { channelId, message, username } = JSON.parse(event.body);
 
-    if (!channelId || !message) {
+    if (!channelId || !message || !username) {
       return {
         statusCode: 400,
         headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'channelId and message are required' }),
+        body: JSON.stringify({ error: 'Missing required fields' }),
       };
     }
 
-    // Create a nice embed for app messages
-    const embed = {
-      author: {
-        name: username || 'Unknown User',
-        icon_url: avatar || null,
-      },
-      description: message,
-      color: 0x6C63FF, // Fusion Esports purple
-      footer: {
-        text: 'Sent via Fusion Esports App',
-      },
-      timestamp: new Date().toISOString(),
-    };
-
-    // Send as embed (looks better) or regular message
     const response = await fetch(
       `https://discord.com/api/v10/channels/${channelId}/messages`,
       {
@@ -57,9 +42,7 @@ export const handler = async (event) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          embeds: [embed],
-          // Also include plain text for notifications
-          content: `**${username}** via App: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`,
+          content: `**[App] ${username}:** ${message}`,
         }),
       }
     );
