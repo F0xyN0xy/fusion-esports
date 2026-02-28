@@ -4,7 +4,7 @@
 
 const DEFAULT_CONFIG = {
     discordUrl: "https://discord.gg/Nsng7acTP7",
-    memberCount: "50+",
+    memberCount: "85+",
     onlineCount: "auto",
     discordServerId: "1303027633679896608",
     tournament: {
@@ -25,6 +25,16 @@ const DEFAULT_CONFIG = {
 function escHtml(str) {
     return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
+
+// Strip Discord mention formats like <@123>, <@&456>, <#789> — show nothing instead
+function cleanMentions(str) {
+    return String(str || "")
+        .replace(/<@&\d+>/g, "")
+        .replace(/<@!?\d+>/g, "")
+        .replace(/<#\d+>/g, "")
+        .trim();
+}
+function cleanField(str) { return escHtml(cleanMentions(str)); }
 
 // ── Local cache helpers ──────────────────────────────────
 function getCachedConfig() {
@@ -96,6 +106,7 @@ function applyConfig(cfg) {
     renderSocials(cfg.socials);
     startCountdown(cfg.tournament);
     buildCalendar(cfg.tournament);
+    renderScrims(cfg.scrims);
     renderWinner(cfg.lastWinner);
     renderCoaching(cfg.coaching);
 }
@@ -343,6 +354,53 @@ function buildCalendar(cfg) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  SCRIMS RENDERER
+// ═══════════════════════════════════════════════════════
+function renderScrims(scrims) {
+    const grid  = document.getElementById("scrimsGrid");
+    const empty = document.getElementById("scrimsEmpty");
+    if (!grid || !empty) return;
+
+    grid.innerHTML = "";
+
+    const visible = (scrims || []).filter(s => s.status !== 'closed');
+    if (!visible.length) {
+        empty.classList.remove("hidden");
+        return;
+    }
+    empty.classList.add("hidden");
+
+    const statusMeta = {
+        open:   { label: 'Open',   color: '#22c55e', bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.25)'   },
+        full:   { label: 'Full',   color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)'   },
+        closed: { label: 'Closed', color: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.25)' },
+    };
+
+    visible.forEach(s => {
+        const meta = statusMeta[s.status] || statusMeta.open;
+        const card = document.createElement("div");
+        card.className = "scrim-card";
+        card.innerHTML = `
+            <div class="scrim-header">
+                <div class="scrim-format">${cleanField(s.format)}</div>
+                <div class="scrim-status" style="color:${meta.color};background:${meta.bg};border:1px solid ${meta.border}">${meta.label}</div>
+            </div>
+            <div class="scrim-details">
+                <div class="scrim-detail"><span>📅</span>${cleanField(s.date)}</div>
+                <div class="scrim-detail"><span>🕐</span>${cleanField(s.time)}</div>
+                <div class="scrim-detail"><span>🏅</span>${cleanField(s.rank || 'All ranks')}</div>
+                ${s.spots ? `<div class="scrim-detail"><span>🪑</span>${cleanField(String(s.spots))} spots</div>` : ""}
+            </div>
+            <a href="#" target="_blank" class="scrim-join btn-primary" data-discord="true">Join on Discord →</a>
+        `;
+        const btn = card.querySelector(".scrim-join");
+        const discordUrl = document.getElementById("heroDiscordBtn")?.href || "#";
+        btn.href = discordUrl;
+        grid.appendChild(card);
+    });
+}
+
+// ═══════════════════════════════════════════════════════
 //  WINNER RENDERER
 // ═══════════════════════════════════════════════════════
 function renderWinner(w) {
@@ -369,9 +427,9 @@ function renderWinner(w) {
     const p3  = document.getElementById("podium3");
     const note = document.getElementById("winnerNote");
 
-    if (w1) w1.textContent = w.first || "";
-    if (w2) w2.textContent = w.second || "";
-    if (w3) w3.textContent = w.third || "";
+    if (w1) w1.textContent = cleanMentions(w.first || "");
+    if (w2) w2.textContent = cleanMentions(w.second || "");
+    if (w3) w3.textContent = cleanMentions(w.third || "");
     if (p2)  p2.style.display  = w.second ? "" : "none";
     if (p3)  p3.style.display  = w.third  ? "" : "none";
     if (note) {

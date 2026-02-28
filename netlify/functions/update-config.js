@@ -1,6 +1,6 @@
 const DEFAULT_CONFIG = {
   discordUrl: "https://discord.gg/Nsng7acTP7",
-  memberCount: "75+",
+  memberCount: "85+",
   onlineCount: "auto",
   discordServerId: "1303027633679896608",
   tournament: {
@@ -59,6 +59,7 @@ export const handler = async (event) => {
       socials:    updates.socials    !== undefined ? updates.socials    : currentConfig.socials,
       coaching:   updates.coaching   !== undefined ? updates.coaching   : (currentConfig.coaching || []),
       lastWinner: updates.lastWinner !== undefined ? updates.lastWinner : (currentConfig.lastWinner || null),
+      scrims:     updates.scrims     !== undefined ? updates.scrims     : (currentConfig.scrims || []),
     };
 
     // Save back to JSONBin

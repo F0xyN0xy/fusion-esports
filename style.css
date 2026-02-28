@@ -613,3 +613,87 @@ footer { border-top: 1px solid var(--border); padding: 28px 48px; position: rela
     padding: 40px;
     font-style: italic;
 }
+
+/* ═══════════════════════════════════════════════════════
+   SCRIMS SECTION
+═══════════════════════════════════════════════════════ */
+.scrims-section {
+    padding: 80px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.scrims-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+}
+.scrim-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+.scrim-card:hover {
+    border-color: rgba(59,130,246,0.35);
+    transform: translateY(-3px);
+}
+.scrim-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.scrim-format {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.05em;
+}
+.scrim-status {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.scrim-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.scrim-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.6);
+}
+.scrim-detail span { font-size: 1rem; }
+.scrim-join {
+    margin-top: auto;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    border-radius: 10px;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: #60a5fa;
+    transition: background 0.2s, border-color 0.2s;
+}
+.scrim-join:hover {
+    background: rgba(59,130,246,0.25);
+    border-color: rgba(59,130,246,0.5);
+}
+.scrims-empty {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    padding: 40px;
+    font-style: italic;
+}

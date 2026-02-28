@@ -1,8 +1,48 @@
 export const handler = async (event) => {
-  const { code } = event.queryStringParameters || {};
-  const CLIENT_ID = '1473722302968631588';
-  const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-  const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI;
+  const { code, refresh, token } = event.queryStringParameters || {};
+
+  // Handle profile refresh using existing access token
+  if (refresh === 'true' && token) {
+    try {
+      const userResponse = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!userResponse.ok) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Token expired' }) };
+      }
+
+      const discordUser = await userResponse.json();
+      const GUILD_ID = '1303027633679896608';
+
+      const memberResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordUser.id}`,
+        { headers: { Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}` } }
+      );
+
+      const member = memberResponse.ok ? await memberResponse.json() : null;
+
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({
+          id: discordUser.id,
+          username: discordUser.username,
+          avatar: discordUser.avatar
+            ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
+            : null,
+          nickname: member?.nick || discordUser.global_name || discordUser.username,
+          roles: member?.roles || [],
+          accessToken: token,
+        }),
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: error.message }),
+      };
+    }
+  }
 
   if (!code) {
     return {

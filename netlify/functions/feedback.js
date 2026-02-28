@@ -1,28 +1,38 @@
-exports.handler = async (event, context) => {
-  // Only allow POST
+export const handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, body: 'Method not allowed' };
   }
 
   try {
     const data = JSON.parse(event.body);
-    const { type, title, description, severity, userId, username, device } = data;
+    const { type, title, description, severity, userId, username, device, category, message, rating, steps, screen, timestamp } = data;
 
-    // Create GitHub issue for bugs
-    if (type === 'bug' && data.githubIssue) {
+    if (type === 'bug') {
       const issueBody = `
 **Bug Report** 🐛
 
-**Severity:** ${severity}
+**Severity:** ${severity || 'Unknown'}
 **Reporter:** ${username} (${userId})
-**Screen:** ${data.screen || 'Unknown'}
-**Time:** ${data.timestamp}
+**Screen:** ${screen || 'Unknown'}
+**Time:** ${timestamp}
 
 ## Description
 ${description}
 
 ## Steps to Reproduce
-${data.steps || 'Not provided'}
+${steps || 'Not provided'}
 
 ## Device Info
 \`\`\`json
@@ -44,53 +54,70 @@ ${JSON.stringify(device, null, 2)}
           body: JSON.stringify({
             title: `[BUG] ${title}`,
             body: issueBody,
-            labels: ['bug', severity, 'mobile-app'],
+            labels: ['bug', severity || 'medium', 'mobile-app'],
           }),
         }
       );
 
       const issueData = await githubResponse.json();
-      
+
+      if (!githubResponse.ok) {
+        throw new Error(issueData.message || 'GitHub API error');
+      }
+
       return {
         statusCode: 200,
-        body: JSON.stringify({ 
-          success: true, 
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({
+          success: true,
           issueUrl: issueData.html_url,
-          issueNumber: issueData.number 
+          issueNumber: issueData.number,
         }),
       };
     }
 
-    // Store feedback in database or send to Discord webhook
     if (type === 'feedback') {
-      // Send to Discord channel
-      await fetch(process.env.DISCORD_FEEDBACK_WEBHOOK, {
+      const stars = '⭐'.repeat(rating || 0);
+      const webhookResponse = await fetch(process.env.DISCORD_FEEDBACK_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           embeds: [{
-            title: `New Feedback: ${data.category}`,
-            description: data.message,
+            title: `💬 New Feedback: ${category || 'General'}`,
+            description: message || description,
             color: 0x6C63FF,
             fields: [
-              { name: 'User', value: username || 'Anonymous', inline: true },
-              { name: 'Rating', value: '⭐'.repeat(data.rating) || 'None', inline: true },
-              { name: 'Device', value: `${device.device} (${device.platform})`, inline: true },
+              { name: 'User', value: `${username} (${userId})`, inline: true },
+              { name: 'Rating', value: stars || 'No rating', inline: true },
+              { name: 'Device', value: device ? `${device.model || 'Unknown'} (${device.platform || 'Unknown'})` : 'Unknown', inline: true },
             ],
-            timestamp: data.timestamp,
+            timestamp: timestamp || new Date().toISOString(),
+            footer: { text: 'Fusion Esports App' },
           }],
         }),
       });
+
+      if (!webhookResponse.ok) {
+        throw new Error('Discord webhook failed');
+      }
+
+      return {
+        statusCode: 200,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ success: true }),
+      };
     }
 
     return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true }),
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Invalid type. Must be "bug" or "feedback"' }),
     };
 
   } catch (error) {
     return {
       statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ error: error.message }),
     };
   }
