@@ -1,6 +1,6 @@
 const DEFAULT_CONFIG = {
   discordUrl: "https://discord.gg/Nsng7acTP7",
-  memberCount: "50+",
+  memberCount: "90+",
   onlineCount: "auto",
   discordServerId: "1303027633679896608",
   tournament: {
