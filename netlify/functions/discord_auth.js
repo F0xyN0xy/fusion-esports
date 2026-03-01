@@ -1,3 +1,7 @@
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI;
+
 export const handler = async (event) => {
   const { code, refresh, token } = event.queryStringParameters || {};
 
