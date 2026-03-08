@@ -4,7 +4,7 @@
 
 const DEFAULT_CONFIG = {
     discordUrl: "https://discord.gg/Nsng7acTP7",
-    memberCount: "85+",
+    memberCount: "50+",
     onlineCount: "auto",
     discordServerId: "1303027633679896608",
     tournament: {
@@ -27,6 +27,26 @@ function escHtml(str) {
 }
 
 // Strip Discord mention formats like <@123>, <@&456>, <#789> — show nothing instead
+
+// ═══════════════════════════════════════════════════════
+//  SESSION TIME FORMATTER — shows in visitor's local time
+// ═══════════════════════════════════════════════════════
+function formatSessionTime(session) {
+    if (session.utcTime) {
+        try {
+            const d = new Date(session.utcTime);
+            if (!isNaN(d)) {
+                return d.toLocaleString(undefined, {
+                    weekday: 'short', day: 'numeric', month: 'short',
+                    hour: '2-digit', minute: '2-digit',
+                    timeZoneName: 'short'
+                });
+            }
+        } catch {}
+    }
+    return `${session.date} ${session.time}`;
+}
+
 function cleanMentions(str) {
     return String(str || "")
         .replace(/<@&\d+>/g, "")
@@ -386,10 +406,9 @@ function renderScrims(scrims) {
                 <div class="scrim-status" style="color:${meta.color};background:${meta.bg};border:1px solid ${meta.border}">${meta.label}</div>
             </div>
             <div class="scrim-details">
-                <div class="scrim-detail"><span>📅</span>${cleanField(s.date)}</div>
-                <div class="scrim-detail"><span>🕐</span>${cleanField(s.time)}</div>
+                <div class="scrim-detail"><span>🕐</span>${escHtml(formatSessionTime(s))}</div>
                 <div class="scrim-detail"><span>🏅</span>${cleanField(s.rank || 'All ranks')}</div>
-                ${s.spots ? `<div class="scrim-detail"><span>🪑</span>${cleanField(String(s.spots))} spots</div>` : ""}
+                <div class="scrim-detail"><span>🪑</span>${s.spotsLeft !== null && s.spotsLeft !== undefined ? `${s.spotsLeft} left` : s.spots ? `${s.spots} spots` : 'Unlimited'}</div>
             </div>
             <a href="#" target="_blank" class="scrim-join btn-primary" data-discord="true">Join on Discord →</a>
         `;
