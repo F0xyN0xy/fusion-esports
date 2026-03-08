@@ -4,7 +4,7 @@
 
 const DEFAULT_CONFIG = {
     discordUrl: "https://discord.gg/Nsng7acTP7",
-    memberCount: "50+",
+    memberCount: "90+",
     onlineCount: "auto",
     discordServerId: "1303027633679896608",
     tournament: {
@@ -126,7 +126,6 @@ function applyConfig(cfg) {
     renderSocials(cfg.socials);
     startCountdown(cfg.tournament);
     buildCalendar(cfg.tournament);
-    renderLeaderboard(cfg.leaderboard);
     renderScrims(cfg.scrims);
     renderWinner(cfg.lastWinner);
     renderCoaching(cfg.coaching);
