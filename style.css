@@ -697,3 +697,54 @@ footer { border-top: 1px solid var(--border); padding: 28px 48px; position: rela
     padding: 40px;
     font-style: italic;
 }
+
+/* ═══════════════════════════════════════════════════════
+   LEADERBOARD SECTION
+═══════════════════════════════════════════════════════ */
+.leaderboard-section {
+    padding: 80px 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 40px;
+}
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    transition: border-color 0.2s, transform 0.15s;
+}
+.lb-row:hover { border-color: rgba(147,51,234,0.3); transform: translateX(4px); }
+.lb-top { border-color: rgba(147,51,234,0.2); background: rgba(147,51,234,0.05); }
+.lb-rank { font-size: 1.4rem; min-width: 36px; text-align: center; }
+.lb-num  { font-size: 0.95rem; font-weight: 700; color: rgba(255,255,255,0.4); }
+.lb-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.lb-avatar-placeholder {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(147,51,234,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; color: #fff;
+    flex-shrink: 0;
+}
+.lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.lb-name { font-weight: 700; color: #fff; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-bar-wrap { height: 5px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+.lb-bar-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a855f7); border-radius: 99px; transition: width 0.6s ease; }
+.lb-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.lb-level { font-size: 0.85rem; font-weight: 700; color: #a855f7; }
+.lb-xp    { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+.leaderboard-empty { text-align: center; color: rgba(255,255,255,0.3); padding: 40px; font-style: italic; }

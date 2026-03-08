@@ -126,6 +126,7 @@ function applyConfig(cfg) {
     renderSocials(cfg.socials);
     startCountdown(cfg.tournament);
     buildCalendar(cfg.tournament);
+    renderLeaderboard(cfg.leaderboard);
     renderScrims(cfg.scrims);
     renderWinner(cfg.lastWinner);
     renderCoaching(cfg.coaching);
@@ -371,6 +372,53 @@ function buildCalendar(cfg) {
         // Add exactly 7 days (in UTC) for next week
         next = new Date(next.getTime() + 7 * 86400 * 1000);
     }
+}
+
+// ═══════════════════════════════════════════════════════
+//  LEADERBOARD RENDERER
+// ═══════════════════════════════════════════════════════
+function renderLeaderboard(entries) {
+    const list  = document.getElementById("leaderboardList");
+    const empty = document.getElementById("leaderboardEmpty");
+    if (!list || !empty) return;
+
+    list.innerHTML = "";
+
+    if (!entries || !entries.length) {
+        empty.classList.remove("hidden");
+        return;
+    }
+    empty.classList.add("hidden");
+
+    const medals = ["🥇", "🥈", "🥉"];
+
+    entries.forEach((entry, i) => {
+        const row = document.createElement("div");
+        row.className = "lb-row" + (i < 3 ? " lb-top" : "");
+
+        const avatar = entry.avatar
+            ? `<img class="lb-avatar" src="${escHtml(entry.avatar)}" alt="" onerror="this.style.display='none'">`
+            : `<div class="lb-avatar lb-avatar-placeholder">${escHtml(entry.username.charAt(0).toUpperCase())}</div>`;
+
+        const pct     = Math.min(100, Math.floor(((entry.xp - Math.pow(entry.level / 0.1, 2)) / (Math.pow((entry.level + 1) / 0.1, 2) - Math.pow(entry.level / 0.1, 2))) * 100));
+        const barFill = isNaN(pct) ? 0 : pct;
+
+        row.innerHTML = `
+            <div class="lb-rank">${medals[i] || `<span class="lb-num">#${entry.rank}</span>`}</div>
+            ${avatar}
+            <div class="lb-info">
+                <div class="lb-name">${escHtml(entry.username)}</div>
+                <div class="lb-bar-wrap">
+                    <div class="lb-bar-fill" style="width:${barFill}%"></div>
+                </div>
+            </div>
+            <div class="lb-stats">
+                <div class="lb-level">Lvl ${entry.level}</div>
+                <div class="lb-xp">${entry.xp.toLocaleString()} XP</div>
+            </div>
+        `;
+        list.appendChild(row);
+    });
 }
 
 // ═══════════════════════════════════════════════════════
