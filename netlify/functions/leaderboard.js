@@ -1,58 +1,36 @@
 export const handler = async (event) => {
-    const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-    const GUILD_ID = '1303027633679896608';
-    const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
-    const XP_BIN_ID = '699ef08d43b1c97be99ccca3';
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Content-Type": "application/json"
+  };
 
-    try {
-        // Fetch XP data from JSONBin
-        const xpResponse = await fetch(
-            `https://api.jsonbin.io/v3/b/${XP_BIN_ID}/latest`,
-            { headers: { 'X-Master-Key': JSONBIN_API_KEY } }
-        );
-        const xpJson = await xpResponse.json();
-        const xpData = xpJson.record;
+  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
+  if (event.httpMethod !== "GET")     return { statusCode: 405, headers, body: JSON.stringify({ error: "Method not allowed" }) };
 
-        // Fetch all members from Discord
-        const membersResponse = await fetch(
-            `https://discord.com/api/v10/guilds/${GUILD_ID}/members?limit=1000`,
-            { headers: { Authorization: `Bot ${BOT_TOKEN}` } }
-        );
-        const members = await membersResponse.json();
+  const binId  = process.env.XP_JSONBIN_ID;
+  const apiKey = process.env.JSONBIN_API_KEY;
 
-        // Build a map of userId -> displayName + avatar
-        const memberMap = {};
-        for (const member of members) {
-            memberMap[member.user.id] = {
-                username: member.nick || member.user.global_name || member.user.username,
-                avatar: member.user.avatar
-                    ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.png`
-                    : null,
-            };
-        }
+  if (!binId || !apiKey) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: "XP_JSONBIN_ID or JSONBIN_API_KEY not set" }) };
+  }
 
-        // Combine XP data with member info
-        const leaderboard = Object.entries(xpData)
-            .map(([userId, stats]) => ({
-                userId,
-                username: memberMap[userId]?.username || `User #${userId.slice(-4)}`,
-                avatar: memberMap[userId]?.avatar || null,
-                xp: stats.xp,
-                messages: stats.messages || 0,
-                vcMinutes: stats.vcMinutes || 0,
-            }))
-            .sort((a, b) => b.xp - a.xp);
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { "X-Master-Key": apiKey }
+    });
 
-        return {
-            statusCode: 200,
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify(leaderboard),
-        };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({ error: error.message }),
-        };
+    if (!res.ok) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: `JSONBin error: ${res.status}` }) };
     }
+
+    const data       = await res.json();
+    const leaderboard = data?.record?.leaderboard || [];
+
+    // App expects a plain JSON array
+    return { statusCode: 200, headers, body: JSON.stringify(leaderboard) };
+
+  } catch (err) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+  }
 };
